@@ -1,0 +1,58 @@
+[
+  {
+    "symbol": "BTC/USDT",
+    "baseAsset": "BTC",
+    "quoteAsset": "USDT",
+    "tickSize": "0.01",
+    "minQuantity": "0.00001",
+    "maxQuantity": "1000",
+    "minNotional": "10",
+    "pricePrecision": 2,
+    "quantityPrecision": 5,
+    "enabled": true,
+    "marginEnabled": true,
+    "futuresEnabled": true
+  },
+  {
+    "symbol": "ETH/USDT",
+    "baseAsset": "ETH",
+    "quoteAsset": "USDT",
+    "tickSize": "0.01",
+    "minQuantity": "0.0001",
+    "maxQuantity": "10000",
+    "minNotional": "10",
+    "pricePrecision": 2,
+    "quantityPrecision": 4,
+    "enabled": true,
+    "marginEnabled": true,
+    "futuresEnabled": true
+  },
+  {
+    "symbol": "SOL/USDT",
+    "baseAsset": "SOL",
+    "quoteAsset": "USDT",
+    "tickSize": "0.01",
+    "minQuantity": "0.01",
+    "maxQuantity": "100000",
+    "minNotional": "10",
+    "pricePrecision": 2,
+    "quantityPrecision": 2,
+    "enabled": true,
+    "marginEnabled": true,
+    "futuresEnabled": true
+  },
+  {
+    "symbol": "XRP/USDT",
+    "baseAsset": "XRP",
+    "quoteAsset": "USDT",
+    "tickSize": "0.0001",
+    "minQuantity": "1",
+    "maxQuantity": "1000000",
+    "minNotional": "10",
+    "pricePrecision": 4,
+    "quantityPrecision": 0,
+    "enabled": true,
+    "marginEnabled": false,
+    "futuresEnabled": false
+  }
+]

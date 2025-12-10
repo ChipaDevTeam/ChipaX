@@ -1,0 +1,3 @@
+2025-12-10T15:40:50.069703Z  WARN turborepo_filewatch: failed to remove cookie file failed to remove file `E:\chipa\ChipaX\.turbo\cookies\.turbo-cookie`
+2025-12-10T15:40:50.149762Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running
+2025-12-10T15:40:50.170508Z  WARN daemon_server: turborepo_lib::commands::daemon: daemon already running

@@ -1,0 +1,220 @@
+/* TradingView Custom Styles - Dark Blue Theme (#131149) */
+
+/* Apply to body and html inside iframe */
+body, html {
+  background-color: #131149 !important;
+}
+
+/* Main chart container */
+.chart-container,
+.chart-page {
+  background-color: #131149 !important;
+}
+
+/* Layout areas - the main sections */
+.layout__area,
+.layout__area--left,
+.layout__area--center,
+.layout__area--right,
+.layout__area--top,
+.layout__area--bottom {
+  background-color: #131149 !important;
+}
+
+/* Chart widget wrapper */
+.chart-widget,
+.chart-markup-table {
+  background-color: #131149 !important;
+}
+
+/* All panes */
+div[class*="pane"],
+div[data-name="pane"] {
+  background-color: #131149 !important;
+}
+
+/* Catch-all for any remaining divs */
+div[class*="wrapper"],
+div[class*="container"],
+div[class*="background"] {
+  background-color: #131149 !important;
+}
+
+/* Top toolbar area */
+div[class*="toolbar"],
+div[class*="header"],
+div[class*="control"] {
+  background-color: #131149 !important;
+}
+
+/* Left sidebar (drawing tools) */
+div[class*="sidebar"],
+div[class*="drawer"],
+div[class*="leftToolbar"] {
+  background-color: #131149 !important;
+}
+
+/* Toolbar customization */
+.chart-controls-bar,
+.header-toolbar,
+.chart-widget-toolbar {
+  background-color: #131149 !important;
+  border-bottom: 1px solid #1e1b5c !important;
+}
+
+/* All panel backgrounds */
+div[class*="pane"],
+div[class*="panel"],
+div[class*="content"] {
+  background-color: #131149 !important;
+}
+
+/* Menu backgrounds */
+.menuBox-yklJjolu,
+.dialog-yklJjolu,
+.popup-yklJjolu {
+  background-color: #131149 !important;
+  border: 1px solid #1e1b5c !important;
+}
+
+/* Button styles */
+.button-b6PWZ7wH {
+  background-color: #1e1b5c !important;
+  color: #9ca3af !important;
+}
+
+.button-b6PWZ7wH:hover {
+  background-color: #2a2670 !important;
+  color: #ffffff !important;
+}
+
+/* Active button */
+.button-b6PWZ7wH.isActive-ntoJfFQm {
+  background-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+/* Volume bars */
+.tv-lightweight-charts__volume-bar--up {
+  fill: #22c55e !important;
+}
+
+.tv-lightweight-charts__volume-bar--down {
+  fill: #ef4444 !important;
+}
+
+/* Grid lines */
+.chart-markup-table .pane-grid-line {
+  stroke: #1e1b5c !important;
+}
+
+/* Crosshair */
+.chart-markup-table .crosshair-line-horizontal,
+.chart-markup-table .crosshair-line-vertical {
+  stroke: #4f46e5 !important;
+}
+
+/* Price axis */
+.price-axis {
+  background-color: #131149 !important;
+  color: #9ca3af !important;
+}
+
+/* Time axis */
+.time-axis {
+  background-color: #131149 !important;
+  color: #9ca3af !important;
+}
+
+/* Legend backgrounds */
+.legend-FeudMUmw,
+.sourcesWrapper-FeudMUmw {
+  background-color: #131149 !important;
+}
+
+/* Drawing toolbar */
+.drawingToolbar-xLMFk_wM {
+  background-color: #131149 !important;
+  border: 1px solid #1e1b5c !important;
+}
+
+/* Context menu */
+.context-menu,
+.tv-dropdown-behavior__body {
+  background-color: #131149 !important;
+  border: 1px solid #1e1b5c !important;
+}
+
+/* Settings dialog */
+.tv-dialog,
+.tv-dialog__section {
+  background-color: #131149 !important;
+}
+
+/* Top controls and buttons */
+div[class*="group"],
+div[class*="row"],
+div[class*="wrap"] {
+  background-color: #131149 !important;
+}
+
+/* Any remaining backgrounds with common patterns */
+[class*="bg"],
+[class*="Background"],
+[class*="-bg-"] {
+  background-color: #131149 !important;
+}
+
+/* Volume pane specific */
+div[class*="volume"],
+canvas + div,
+svg + div {
+  background-color: #131149 !important;
+}
+
+/* All table/grid cells */
+td, th, tr {
+  background-color: #131149 !important;
+}
+
+/* Universal catch-all - last resort */
+* {
+  background-color: #131149 !important;
+}
+
+/* But preserve canvas and svg backgrounds for actual chart rendering */
+canvas,
+svg {
+  background-color: transparent !important;
+}
+
+/* Remove selection boxes and overlays */
+div[class*="selection"],
+div[class*="overlay"],
+div[class*="highlight"],
+div[class*="box"],
+.selection-box,
+.drag-box {
+  background-color: transparent !important;
+  opacity: 0 !important;
+  display: none !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f0e3a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4f46e5;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6366f1;
+}

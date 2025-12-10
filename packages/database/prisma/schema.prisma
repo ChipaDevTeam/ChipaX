@@ -1,0 +1,266 @@
+// FILE: packages/database/prisma/schema.prisma
+// PURPOSE: Database schema definition using Prisma ORM
+// AUTHOR: ChipaTrade Core Team
+// DEPENDENCIES: PostgreSQL 16+
+//
+// DESCRIPTION:
+// Defines all database tables with strict types and relationships.
+// Uses TimescaleDB extension for time-series data (OHLCV candles).
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User and authentication
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  email         String   @unique
+  passwordHash  String
+  kycVerified   Boolean  @default(false)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  balances      Balance[]
+  orders        Order[]
+  trades        Trade[]   @relation("TakerUser")
+  makerTrades   Trade[]   @relation("MakerUser")
+  positions     Position[]
+  apiKeys       ApiKey[]
+  sessions      Session[]
+
+  @@index([email])
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+  PENDING_VERIFICATION
+}
+
+// API Keys for programmatic access
+model ApiKey {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  name        String
+  keyHash     String   @unique
+  permissions String[]
+  expiresAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+// User sessions
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+// User balances (spot wallet)
+model Balance {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  currency  String
+  available Decimal  @db.Decimal(36, 18)
+  locked    Decimal  @db.Decimal(36, 18) @default(0)
+  total     Decimal  @db.Decimal(36, 18)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, currency])
+  @@index([userId])
+  @@map("balances")
+}
+
+// Orders
+model Order {
+  id                String      @id @default(uuid()) @db.Uuid
+  userId            String      @db.Uuid
+  symbol            String
+  side              OrderSide
+  type              OrderType
+  status            OrderStatus @default(PENDING)
+  price             Decimal?    @db.Decimal(36, 18)
+  stopPrice         Decimal?    @db.Decimal(36, 18)
+  quantity          Decimal     @db.Decimal(36, 18)
+  filledQuantity    Decimal     @db.Decimal(36, 18) @default(0)
+  remainingQuantity Decimal     @db.Decimal(36, 18)
+  timeInForce       TimeInForce @default(GTC)
+  clientOrderId     String?
+  expiresAt         DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  makerTrades  Trade[] @relation("MakerOrder")
+  takerTrades  Trade[] @relation("TakerOrder")
+
+  @@index([userId])
+  @@index([symbol, status])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+  STOP_LOSS
+  STOP_LIMIT
+  TAKE_PROFIT
+  TAKE_PROFIT_LIMIT
+}
+
+enum OrderStatus {
+  PENDING
+  OPEN
+  PARTIALLY_FILLED
+  FILLED
+  CANCELLED
+  REJECTED
+  EXPIRED
+}
+
+enum TimeInForce {
+  GTC  // Good Till Cancel
+  IOC  // Immediate Or Cancel
+  FOK  // Fill Or Kill
+  GTD  // Good Till Date
+}
+
+// Executed trades
+model Trade {
+  id            String   @id @default(uuid()) @db.Uuid
+  symbol        String
+  makerOrderId  String   @db.Uuid
+  takerOrderId  String   @db.Uuid
+  makerUserId   String   @db.Uuid
+  takerUserId   String   @db.Uuid
+  price         Decimal  @db.Decimal(36, 18)
+  quantity      Decimal  @db.Decimal(36, 18)
+  side          OrderSide
+  makerFee      Decimal  @db.Decimal(36, 18)
+  takerFee      Decimal  @db.Decimal(36, 18)
+  createdAt     DateTime @default(now())
+
+  makerOrder Order @relation("MakerOrder", fields: [makerOrderId], references: [id])
+  takerOrder Order @relation("TakerOrder", fields: [takerOrderId], references: [id])
+  makerUser  User  @relation("MakerUser", fields: [makerUserId], references: [id])
+  takerUser  User  @relation("TakerUser", fields: [takerUserId], references: [id])
+
+  @@index([symbol, createdAt])
+  @@index([makerUserId])
+  @@index([takerUserId])
+  @@index([createdAt])
+  @@map("trades")
+}
+
+// Leveraged positions (margin/futures)
+model Position {
+  id                 String         @id @default(uuid()) @db.Uuid
+  userId             String         @db.Uuid
+  symbol             String
+  side               PositionSide
+  entryPrice         Decimal        @db.Decimal(36, 18)
+  markPrice          Decimal        @db.Decimal(36, 18)
+  quantity           Decimal        @db.Decimal(36, 18)
+  leverage           Int
+  marginType         MarginType
+  initialMargin      Decimal        @db.Decimal(36, 18)
+  maintenanceMargin  Decimal        @db.Decimal(36, 18)
+  unrealizedPnL      Decimal        @db.Decimal(36, 18) @default(0)
+  realizedPnL        Decimal        @db.Decimal(36, 18) @default(0)
+  liquidationPrice   Decimal        @db.Decimal(36, 18)
+  status             PositionStatus @default(OPEN)
+  openedAt           DateTime       @default(now())
+  closedAt           DateTime?
+  updatedAt          DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([symbol, status])
+  @@index([status])
+  @@map("positions")
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum MarginType {
+  CROSS
+  ISOLATED
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+  LIQUIDATED
+}
+
+// Liquidation events log
+model LiquidationEvent {
+  id                String   @id @default(uuid()) @db.Uuid
+  positionId        String   @db.Uuid
+  userId            String   @db.Uuid
+  symbol            String
+  side              PositionSide
+  liquidationPrice  Decimal  @db.Decimal(36, 18)
+  quantity          Decimal  @db.Decimal(36, 18)
+  loss              Decimal  @db.Decimal(36, 18)
+  reason            String
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("liquidation_events")
+}
+
+// OHLCV candles (using TimescaleDB hypertable)
+model Candle {
+  id        String   @id @default(uuid()) @db.Uuid
+  symbol    String
+  interval  String   // 1m, 5m, 15m, 1h, 4h, 1d
+  timestamp DateTime
+  open      Decimal  @db.Decimal(36, 18)
+  high      Decimal  @db.Decimal(36, 18)
+  low       Decimal  @db.Decimal(36, 18)
+  close     Decimal  @db.Decimal(36, 18)
+  volume    Decimal  @db.Decimal(36, 18)
+
+  @@unique([symbol, interval, timestamp])
+  @@index([symbol, interval, timestamp])
+  @@map("candles")
+}

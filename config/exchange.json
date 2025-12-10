@@ -1,0 +1,37 @@
+{
+  "exchange": {
+    "name": "ChipaTrade",
+    "version": "1.0.0",
+    "environment": "development",
+    "baseUrl": "http://localhost:3000"
+  },
+  "trading": {
+    "tickSize": "0.01",
+    "minOrderSize": "0.001",
+    "maxOrderSize": "10000",
+    "minPrice": "0.01",
+    "maxPrice": "1000000",
+    "maxLeverage": 100,
+    "defaultLeverage": 1,
+    "maintenanceMarginRate": 0.005,
+    "initialMarginRate": 0.01
+  },
+  "matching": {
+    "algorithm": "price-time-priority",
+    "selfTradePreventionMode": "CANCEL_TAKER",
+    "maxOrdersPerUser": 1000,
+    "maxOrderBookDepth": 500
+  },
+  "fees": {
+    "makerFee": 0.0001,
+    "takerFee": 0.0005,
+    "withdrawalFeePercentage": 0.0001,
+    "minWithdrawalFee": "0.00001"
+  },
+  "limits": {
+    "maxOpenOrders": 200,
+    "maxOpenPositions": 50,
+    "maxDailyWithdrawals": 3,
+    "maxWithdrawalAmount": "100000"
+  }
+}

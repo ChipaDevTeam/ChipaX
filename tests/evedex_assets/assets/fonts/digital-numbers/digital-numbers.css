@@ -1,0 +1,11 @@
+@font-face {
+  font-family: 'Digital-Numbers';
+  src:
+    url('./digital-numbers.ttf.woff') format('woff'),
+    url('./digital-numbers.ttf.svg#Digital-Numbers') format('svg'),
+    url('./digital-numbers.ttf.eot'),
+    url('./digital-numbers.ttf.eot?#iefix') format('embedded-opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

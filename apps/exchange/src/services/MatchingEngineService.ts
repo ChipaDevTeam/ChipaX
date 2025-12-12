@@ -10,9 +10,10 @@
  */
 
 import { MatchingEngine, WalletService } from '@chipatrade/core';
-import type { TradingPair, Order, OrderId, UserId } from '@chipatrade/core';
+import type { TradingPair, Order, OrderId } from '@chipatrade/core';
 import { Result, Err } from '@chipatrade/core';
 import { OrderNotFoundError } from '@chipatrade/core';
+import type { TradeResult } from '@chipatrade/core';
 
 /**
  * Singleton service managing all matching engines
@@ -23,7 +24,7 @@ export class MatchingEngineService {
   private walletService: WalletService;
 
   private constructor() {
-    this.walletService = WalletService.getInstance();
+    this.walletService = new WalletService();
     this.initializeEngines();
   }
 
@@ -67,20 +68,7 @@ export class MatchingEngineService {
   /**
    * Processes an order through the matching engine
    */
-  public processOrder(order: Order): Result<{
-    updatedOrder: Order;
-    trades: Array<{
-      id: string;
-      price: string;
-      quantity: string;
-      side: string;
-      makerOrderId: OrderId;
-      takerOrderId: OrderId;
-      makerUserId: UserId;
-      takerUserId: UserId;
-      timestamp: number;
-    }>;
-  }, Error> {
+  public processOrder(order: Order): Result<TradeResult, Error> {
     const engineResult = this.getEngine(order.symbol);
     if (!engineResult.ok) {
       return engineResult;
@@ -92,7 +80,7 @@ export class MatchingEngineService {
   /**
    * Cancels an order
    */
-  public cancelOrder(symbol: TradingPair, orderId: OrderId): Result<Order, OrderNotFoundError> {
+  public cancelOrder(symbol: TradingPair, orderId: OrderId) {
     const engineResult = this.getEngine(symbol);
     if (!engineResult.ok) {
       return Err(new OrderNotFoundError(orderId));
@@ -104,12 +92,7 @@ export class MatchingEngineService {
   /**
    * Gets order book snapshot
    */
-  public getOrderBookSnapshot(symbol: TradingPair, depth: number = 20): Result<{
-    symbol: TradingPair;
-    bids: Array<{ price: string; quantity: string; orderCount: number }>;
-    asks: Array<{ price: string; quantity: string; orderCount: number }>;
-    timestamp: number;
-  }, Error> {
+  public getOrderBookSnapshot(symbol: TradingPair, depth: number = 20) {
     const engineResult = this.getEngine(symbol);
     if (!engineResult.ok) {
       return engineResult;

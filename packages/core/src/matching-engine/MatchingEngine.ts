@@ -22,7 +22,7 @@ import { randomUUID } from 'crypto';
 /**
  * Trade generation result
  */
-interface TradeResult {
+export interface TradeResult {
   readonly trades: readonly Trade[];
   readonly updatedOrder: Order;
 }

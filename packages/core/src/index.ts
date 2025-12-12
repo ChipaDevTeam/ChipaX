@@ -15,6 +15,7 @@ export * as DecimalUtils from './utils/Decimal';
 export { PriceLevel } from './matching-engine/PriceLevel';
 export { OrderBook } from './matching-engine/OrderBook';
 export { MatchingEngine } from './matching-engine/MatchingEngine';
+export type { TradeResult } from './matching-engine/MatchingEngine';
 
 // Export wallet service
 export { WalletService } from './wallet/WalletService';

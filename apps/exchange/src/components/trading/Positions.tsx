@@ -7,52 +7,14 @@
 'use client';
 
 import { useState } from 'react';
+import { usePositions, useBalance } from '@/hooks/useTrading';
 
 type TabType = 'positions' | 'assets';
 
-interface Position {
-  symbol: string;
-  side: 'long' | 'short';
-  size: string;
-  entryPrice: string;
-  markPrice: string;
-  liquidationPrice: string;
-  margin: string;
-  unrealizedPnL: string;
-  pnlPercent: string;
-}
-
-interface Asset {
-  asset: string;
-  total: string;
-  available: string;
-  inOrder: string;
-  btcValue: string;
-}
-
 export default function Positions() {
   const [activeTab, setActiveTab] = useState<TabType>('positions');
-
-  // Mock data
-  const positions: Position[] = [
-    {
-      symbol: 'BTC/USDT',
-      side: 'long',
-      size: '0.5',
-      entryPrice: '43,200.00',
-      markPrice: '43,850.50',
-      liquidationPrice: '40,100.00',
-      margin: '2,160.00',
-      unrealizedPnL: '+325.25',
-      pnlPercent: '+15.05',
-    },
-  ];
-
-  const assets: Asset[] = [
-    { asset: 'USDT', total: '12,450.32', available: '10,290.32', inOrder: '2,160.00', btcValue: '0.28' },
-    { asset: 'BTC', total: '0.5000', available: '0.0000', inOrder: '0.5000', btcValue: '0.50' },
-    { asset: 'ETH', total: '2.5000', available: '2.5000', inOrder: '0.0000', btcValue: '0.13' },
-  ];
+  const { positions, isLoading: positionsLoading, error: positionsError } = usePositions(1000);
+  const { balance, isLoading: balanceLoading } = useBalance();
 
   return (
     <div className="flex flex-col h-full bg-[#131149] border border-[#1e1b5c] rounded">
@@ -66,7 +28,7 @@ export default function Positions() {
               : 'text-indigo-300 hover:text-white'
           }`}
         >
-          Positions (1)
+          Positions ({positions.length})
         </button>
         <button
           onClick={() => setActiveTab('assets')}
@@ -83,7 +45,15 @@ export default function Positions() {
       {/* Content */}
       {activeTab === 'positions' && (
         <div className="flex-1 overflow-auto">
-          {positions.length > 0 ? (
+          {positionsLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-indigo-400 text-sm">Loading positions...</p>
+            </div>
+          ) : positionsError ? (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-red-400 text-sm">Failed to load positions</p>
+            </div>
+          ) : positions.length > 0 ? (
             <table className="w-full text-xs">
               <thead className="border-b border-[#1e1b5c] sticky top-0 bg-[#131149]">
                 <tr className="text-indigo-400 text-left">
@@ -91,37 +61,36 @@ export default function Positions() {
                   <th className="p-3 font-normal">Side</th>
                   <th className="p-3 font-normal">Size</th>
                   <th className="p-3 font-normal">Entry Price</th>
-                  <th className="p-3 font-normal">Mark Price</th>
-                  <th className="p-3 font-normal">Liq. Price</th>
-                  <th className="p-3 font-normal">Margin</th>
-                  <th className="p-3 font-normal">PnL (ROE%)</th>
+                  <th className="p-3 font-normal">Leverage</th>
+                  <th className="p-3 font-normal">Margin Used</th>
+                  <th className="p-3 font-normal">PnL</th>
                   <th className="p-3 font-normal">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {positions.map((position, index) => {
-                  const isProfit = position.unrealizedPnL.startsWith('+');
+                {positions.map((position) => {
+                  const pnl = position.return_on_equity || position.unrealized_pnl || 0;
+                  const isProfit = pnl >= 0;
                   return (
-                    <tr key={index} className="border-b border-[#1e1b5c] hover:bg-[#1a1660]/30">
-                      <td className="p-3 text-white font-medium">{position.symbol}</td>
+                    <tr key={position.coin} className="border-b border-[#1e1b5c] hover:bg-[#1a1660]/30">
+                      <td className="p-3 text-white font-medium">{position.coin}</td>
                       <td className="p-3">
                         <span
                           className={`px-2 py-1 rounded text-xs ${
-                            position.side === 'long'
+                            parseFloat(position.szi) >= 0
                               ? 'bg-green-900/30 text-green-400'
                               : 'bg-red-900/30 text-red-400'
                           }`}
                         >
-                          {position.side.toUpperCase()}
+                          {parseFloat(position.szi) >= 0 ? 'LONG' : 'SHORT'}
                         </span>
                       </td>
-                      <td className="p-3 text-white">{position.size}</td>
-                      <td className="p-3 text-white">{position.entryPrice}</td>
-                      <td className="p-3 text-white">{position.markPrice}</td>
-                      <td className="p-3 text-yellow-500">{position.liquidationPrice}</td>
-                      <td className="p-3 text-white">{position.margin}</td>
+                      <td className="p-3 text-white">{Math.abs(parseFloat(position.szi)).toFixed(6)}</td>
+                      <td className="p-3 text-white">${parseFloat(position.entry_px || '0').toFixed(2)}</td>
+                      <td className="p-3 text-white">{parseFloat(position.leverage || '1').toFixed(1)}x</td>
+                      <td className="p-3 text-white">${parseFloat(position.margin_used || '0').toFixed(2)}</td>
                       <td className={`p-3 ${isProfit ? 'text-green-500' : 'text-red-500'}`}>
-                        {position.unrealizedPnL} ({position.pnlPercent}%)
+                        {isProfit ? '+' : ''}{pnl.toFixed(2)}%
                       </td>
                       <td className="p-3">
                         <button className="text-indigo-400 hover:text-blue-400 text-xs">Close</button>
@@ -141,28 +110,42 @@ export default function Positions() {
 
       {activeTab === 'assets' && (
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-xs">
-            <thead className="border-b border-[#1e1b5c] sticky top-0 bg-[#131149]">
-              <tr className="text-indigo-400 text-left">
-                <th className="p-3 font-normal">Asset</th>
-                <th className="p-3 font-normal text-right">Total</th>
-                <th className="p-3 font-normal text-right">Available</th>
-                <th className="p-3 font-normal text-right">In Order</th>
-                <th className="p-3 font-normal text-right">BTC Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assets.map((asset, index) => (
-                <tr key={index} className="border-b border-[#1e1b5c] hover:bg-[#1a1660]/30">
-                  <td className="p-3 text-white font-medium">{asset.asset}</td>
-                  <td className="p-3 text-white text-right">{asset.total}</td>
-                  <td className="p-3 text-white text-right">{asset.available}</td>
-                  <td className="p-3 text-indigo-300 text-right">{asset.inOrder}</td>
-                  <td className="p-3 text-indigo-300 text-right">{asset.btcValue}</td>
+          {balanceLoading ? (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-indigo-400 text-sm">Loading balances...</p>
+            </div>
+          ) : balance ? (
+            <table className="w-full text-xs">
+              <thead className="border-b border-[#1e1b5c] sticky top-0 bg-[#131149]">
+                <tr className="text-indigo-400 text-left">
+                  <th className="p-3 font-normal">Summary</th>
+                  <th className="p-3 font-normal text-right">Value (USD)</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                <tr className="border-b border-[#1e1b5c]">
+                  <td className="p-3 text-white font-medium">Total Account Value</td>
+                  <td className="p-3 text-white text-right">${balance.total_account_value?.toFixed(2) || '0.00'}</td>
+                </tr>
+                <tr className="border-b border-[#1e1b5c]">
+                  <td className="p-3 text-white font-medium">Available Balance</td>
+                  <td className="p-3 text-green-400 text-right">${balance.available_balance?.toFixed(2) || '0.00'}</td>
+                </tr>
+                <tr className="border-b border-[#1e1b5c]">
+                  <td className="p-3 text-white font-medium">Margin Used</td>
+                  <td className="p-3 text-yellow-400 text-right">${balance.margin_used?.toFixed(2) || '0.00'}</td>
+                </tr>
+                <tr className="border-b border-[#1e1b5c]">
+                  <td className="p-3 text-white font-medium">Withdrawable Balance</td>
+                  <td className="p-3 text-indigo-300 text-right">${balance.withdrawable_balance?.toFixed(2) || '0.00'}</td>
+                </tr>
+              </tbody>
+            </table>
+          ) : (
+            <div className="flex items-center justify-center h-40">
+              <p className="text-indigo-400 text-sm">Please sign in to view balances</p>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -6,6 +6,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'ChipaX Exchange',
   description: 'Advanced cryptocurrency trading platform',
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

@@ -6,35 +6,14 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useFills } from '@/hooks/useTrading';
 
-interface Trade {
-  price: string;
-  amount: string;
-  time: string;
-  side: 'buy' | 'sell';
+interface RecentTradesProps {
+  symbol?: string;
 }
 
-export default function RecentTrades() {
-  const [trades, setTrades] = useState<Trade[]>([]);
-
-  // Mock data - will be replaced with WebSocket real-time data
-  useEffect(() => {
-    const mockTrades: Trade[] = [
-      { price: '43,851.50', amount: '0.234', time: '16:45:23', side: 'buy' },
-      { price: '43,850.00', amount: '1.567', time: '16:45:22', side: 'sell' },
-      { price: '43,852.50', amount: '0.890', time: '16:45:20', side: 'buy' },
-      { price: '43,849.00', amount: '2.345', time: '16:45:18', side: 'sell' },
-      { price: '43,851.00', amount: '0.678', time: '16:45:15', side: 'buy' },
-      { price: '43,850.50', amount: '1.234', time: '16:45:12', side: 'buy' },
-      { price: '43,848.00', amount: '0.456', time: '16:45:10', side: 'sell' },
-      { price: '43,851.50', amount: '0.987', time: '16:45:08', side: 'buy' },
-      { price: '43,849.50', amount: '1.456', time: '16:45:05', side: 'sell' },
-      { price: '43,850.00', amount: '0.765', time: '16:45:02', side: 'buy' },
-    ];
-
-    setTrades(mockTrades);
-  }, []);
+export default function RecentTrades({ symbol = 'BTC' }: RecentTradesProps) {
+  const { fills, isLoading } = useFills(symbol, 20);
 
   return (
     <div className="flex flex-col h-full bg-[#131149] border border-[#1e1b5c] rounded">
@@ -52,20 +31,35 @@ export default function RecentTrades() {
 
       {/* Trades List */}
       <div className="flex-1 overflow-auto">
-        <div className="px-3 py-1">
-          {trades.map((trade, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-3 gap-2 py-1.5 text-xs hover:bg-[#1a1660]/50"
-            >
-              <div className={trade.side === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                {trade.price}
-              </div>
-              <div className="text-right text-white">{trade.amount}</div>
-              <div className="text-right text-indigo-300">{trade.time}</div>
-            </div>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-40">
+            <p className="text-indigo-400 text-sm">Loading trades...</p>
+          </div>
+        ) : fills.length > 0 ? (
+          <div className="px-3 py-1">
+            {fills.slice(0, 20).map((fill) => {
+              const isBuy = fill.side === 'buy';
+              const time = new Date(fill.time).toLocaleTimeString();
+              
+              return (
+                <div
+                  key={fill.tid}
+                  className="grid grid-cols-3 gap-2 py-1.5 text-xs hover:bg-[#1a1660]/50"
+                >
+                  <div className={isBuy ? 'text-green-500' : 'text-red-500'}>
+                    ${parseFloat(fill.px).toFixed(2)}
+                  </div>
+                  <div className="text-right text-white">{parseFloat(fill.sz).toFixed(6)}</div>
+                  <div className="text-right text-indigo-300">{time}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-40">
+            <p className="text-indigo-400 text-sm">No recent trades</p>
+          </div>
+        )}
       </div>
     </div>
   );

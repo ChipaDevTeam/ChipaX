@@ -228,7 +228,9 @@ export class ChipaTradeDatafeed implements IBasicDataFeed {
       const interval = resolutionMap[resolution] || '1h';
       const coin = symbolInfo.name;
       
-      // API expects timestamps in milliseconds
+      // Try to get candles from API
+      let bars: Bar[] = [];
+      
       const response = await apiClient.getCandles(
         coin,
         interval,
@@ -236,18 +238,25 @@ export class ChipaTradeDatafeed implements IBasicDataFeed {
         periodParams.to * 1000
       );
       
-      const candles = response.data || [];
+      let candles = response.data || [];
       
-      const bars: Bar[] = candles.map((candle: any) => ({
-        time: candle.time || candle.timestamp,
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
-        volume: candle.volume,
-      }));
+      // Ensure candles is an array
+      if (!Array.isArray(candles)) {
+        console.warn('[ChipaTrade Datafeed] candles is not an array, using empty array');
+        candles = [];
+      }
       
-      if (bars.length > 0) {
+      if (candles.length > 0) {
+        bars = candles.map((candle: any) => ({
+          time: candle.time || candle.timestamp,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+          volume: candle.volume || 0,
+        }));
+        
+        // Cache the last bar for real-time updates
         const lastBar = bars[bars.length - 1];
         this.lastBarsCache.set(`${symbolInfo.name}_${resolution}`, lastBar);
       }
@@ -255,7 +264,7 @@ export class ChipaTradeDatafeed implements IBasicDataFeed {
       onResult(bars, { noData: bars.length === 0 });
     } catch (error) {
       console.error('[ChipaTrade Datafeed] getBars error:', error);
-      onError('Failed to get bars');
+      onError('Failed to fetch candles from API');
     }
   }
 
@@ -353,6 +362,7 @@ export class ChipaTradeDatafeed implements IBasicDataFeed {
       default: return 60 * 60 * 1000;
     }
   }
+
 }
 
 export const datafeed = new ChipaTradeDatafeed();

@@ -99,7 +99,7 @@ export class MatchingEngineService {
     }
 
     const snapshot = engineResult.value.getOrderBookSnapshot(depth);
-    return { ok: true, value: snapshot };
+    return { ok: true as const, value: snapshot };
   }
 
   /**

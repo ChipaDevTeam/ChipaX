@@ -6,27 +6,98 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useTrading, useBalance, usePrice } from '@/hooks/useTrading';
+import { useAuth } from '@/contexts/AuthContext';
 
 type OrderType = 'limit' | 'market';
 type OrderSide = 'buy' | 'sell';
 
-export default function TradePanel() {
+interface TradePanelProps {
+  symbol?: string;
+}
+
+export default function TradePanel({ symbol = 'BTC' }: TradePanelProps) {
+  const { isAuthenticated } = useAuth();
+  const { placeLimitOrder, placeMarketOrder, isSubmitting } = useTrading();
+  const { balance } = useBalance();
+  const { price: currentPrice } = usePrice(symbol);
+
   const [activeTab, setActiveTab] = useState<OrderSide>('buy');
   const [orderType, setOrderType] = useState<OrderType>('limit');
-  const [price, setPrice] = useState('43,850.50');
+  const [price, setPrice] = useState('');
   const [amount, setAmount] = useState('');
   const [total, setTotal] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  // Update price from current market price
+  useEffect(() => {
+    if (currentPrice && orderType === 'limit' && !price) {
+      setPrice(currentPrice.toFixed(2));
+    }
+  }, [currentPrice, orderType, price]);
+
+  const availableBalance = balance?.available_balance || 0;
 
   const handlePercentClick = (percent: number) => {
-    // Calculate amount based on available balance percentage
-    const mockBalance = 1000; // USDT
-    const calculatedTotal = (mockBalance * percent) / 100;
+    const calculatedTotal = (availableBalance * percent) / 100;
     setTotal(calculatedTotal.toFixed(2));
     
     if (orderType === 'limit' && price) {
       const priceNum = parseFloat(price.replace(/,/g, ''));
-      setAmount((calculatedTotal / priceNum).toFixed(6));
+      if (priceNum > 0) {
+        setAmount((calculatedTotal / priceNum).toFixed(6));
+      }
+    } else if (orderType === 'market' && currentPrice) {
+      setAmount((calculatedTotal / currentPrice).toFixed(6));
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!isAuthenticated) {
+      setError('Please login to trade');
+      return;
+    }
+
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const amountNum = parseFloat(amount);
+      
+      if (!amountNum || amountNum <= 0) {
+        setError('Please enter a valid amount');
+        return;
+      }
+
+      if (orderType === 'limit') {
+        const priceNum = parseFloat(price.replace(/,/g, ''));
+        if (!priceNum || priceNum <= 0) {
+          setError('Please enter a valid price');
+          return;
+        }
+
+        await placeLimitOrder({
+          coin: symbol,
+          is_buy: activeTab === 'buy',
+          size: amountNum,
+          price: priceNum,
+        });
+      } else {
+        await placeMarketOrder({
+          coin: symbol,
+          is_buy: activeTab === 'buy',
+          size: amountNum,
+        });
+      }
+
+      setSuccess('Order placed successfully!');
+      setAmount('');
+      setTotal('');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to place order');
     }
   };
 
@@ -85,8 +156,22 @@ export default function TradePanel() {
         {/* Available Balance */}
         <div className="flex justify-between text-xs">
           <span className="text-indigo-400">Available</span>
-          <span className="text-white">1,000.00 USDT</span>
+          <span className="text-white">
+            {availableBalance.toFixed(2)} USDT
+          </span>
         </div>
+
+        {/* Error/Success Messages */}
+        {error && (
+          <div className="p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400">
+            {error}
+          </div>
+        )}
+        {success && (
+          <div className="p-2 bg-green-500/10 border border-green-500/20 rounded text-xs text-green-400">
+            {success}
+          </div>
+        )}
 
         {/* Price Input (for limit orders) */}
         {orderType === 'limit' && (
@@ -155,14 +240,22 @@ export default function TradePanel() {
 
         {/* Submit Button */}
         <button
-          className={`w-full py-3 rounded font-semibold text-sm transition-colors ${
+          onClick={handleSubmit}
+          disabled={isSubmitting || !isAuthenticated}
+          className={`w-full py-3 rounded font-semibold text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
             activeTab === 'buy'
               ? 'bg-green-600 hover:bg-green-700 text-white'
               : 'bg-red-600 hover:bg-red-700 text-white'
           }`}
         >
-          {activeTab === 'buy' ? 'Buy' : 'Sell'} BTC
+          {isSubmitting ? 'Submitting...' : `${activeTab === 'buy' ? 'Buy' : 'Sell'} ${symbol}`}
         </button>
+
+        {!isAuthenticated && (
+          <p className="text-xs text-center text-indigo-400">
+            Please login to trade
+          </p>
+        )}
       </div>
     </div>
   );

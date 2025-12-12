@@ -7,7 +7,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import { datafeed } from '@/lib/tradingview-datafeed';
+import { datafeed } from '@/lib/tradingview-datafeed-api';
 
 // TradingView types - available globally after script loads
 declare const TradingView: any;

@@ -106,12 +106,23 @@ export function useBalance(refreshInterval: number = 10000) {
   const [error, setError] = useState<Error | null>(null);
 
   const fetchBalance = useCallback(async () => {
+    // Only fetch if user is authenticated
+    if (!apiClient.isAuthenticated()) {
+      setBalance(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await apiClient.getBalance();
       setBalance(response.data);
       setError(null);
     } catch (err) {
       setError(err as Error);
+      // If 401/403, user is not authenticated
+      if ((err as any).status === 401 || (err as any).status === 403) {
+        setBalance(null);
+      }
     } finally {
       setIsLoading(false);
     }
